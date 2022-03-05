@@ -11,6 +11,7 @@ const char keyboard_map[CHIP8_TOTAL_KEYS] = {
 int main(int argc, char **argv)
 {
     struct chip8 chip8;
+    chip8_init(&chip8);
 
     chip8_keyboard_down(&chip8.keyboard, 0x0f);
     chip8_keyboard_up(&chip8.keyboard, 0x0f);
