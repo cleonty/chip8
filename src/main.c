@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 {
     struct chip8 chip8;
     chip8_init(&chip8);
-    chip8.registers.delay_timer = 10;
+    chip8.registers.sound_timer = 255;
 
     chip8_screen_draw_sprite(&chip8.screen, 0, 0, &chip8.memory.memory[0x00], 5);
     chip8_screen_draw_sprite(&chip8.screen, 5, 0, &chip8.memory.memory[0x05], 5);
@@ -112,6 +112,11 @@ int main(int argc, char **argv)
             printf ("delay\n");
             Sleep(100);
             chip8.registers.delay_timer--;
+        }
+        if (chip8.registers.sound_timer > 0)
+        {
+            Beep(1500, 100);
+            chip8.registers.sound_timer = 0;
         }
     }
 
