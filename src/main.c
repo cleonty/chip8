@@ -13,7 +13,13 @@ int main(int argc, char **argv)
     struct chip8 chip8;
     chip8_init(&chip8);
     
-    chip8_screen_set(&chip8.screen, 10, 1);
+    chip8_screen_draw_sprite(&chip8.screen, 0, 0, &chip8.memory.memory[0x00], 5);
+    chip8_screen_draw_sprite(&chip8.screen, 5, 0, &chip8.memory.memory[0x05], 5);
+    chip8_screen_draw_sprite(&chip8.screen, 10, 0, &chip8.memory.memory[0x0a], 5);
+    chip8_screen_draw_sprite(&chip8.screen, 15, 0, &chip8.memory.memory[0x0f], 5);
+    chip8_screen_draw_sprite(&chip8.screen, 20, 0, &chip8.memory.memory[0x0f+5], 5);
+    chip8_screen_draw_sprite(&chip8.screen, 25, 0, &chip8.memory.memory[0x0f+10], 5);
+    chip8_screen_draw_sprite(&chip8.screen, 62, 0, &chip8.memory.memory[0x0f+15], 5);
 
     chip8_keyboard_down(&chip8.keyboard, 0x0f);
     chip8_keyboard_up(&chip8.keyboard, 0x0f);
