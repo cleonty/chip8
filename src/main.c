@@ -66,7 +66,6 @@ int main(int argc, char **argv)
             {
                 char key = event.key.keysym.sym;
                 int vkey = chip8_keyboard_map(&chip8.keyboard, key);
-                printf("key is down %c %x\n", key, vkey);
                 if (vkey != -1)
                 {
                     chip8_keyboard_down(&chip8.keyboard, vkey);
@@ -77,7 +76,6 @@ int main(int argc, char **argv)
             {
                 char key = event.key.keysym.sym;
                 int vkey = chip8_keyboard_map(&chip8.keyboard, key);
-                printf("key is up %c %x\n", key, vkey);
                 if (vkey != -1)
                 {
                     chip8_keyboard_up(&chip8.keyboard, vkey);
