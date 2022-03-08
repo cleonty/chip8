@@ -27,7 +27,7 @@ const char chip8_default_character_set[] = {
 void chip8_init(struct chip8 *chip8)
 {
   memset(chip8, 0, sizeof(struct chip8));
-  memcpy(&chip8->memory, chip8_default_character_set, sizeof(chip8_default_character_set));
+  memcpy(&chip8->memory.memory, chip8_default_character_set, sizeof(chip8_default_character_set));
 }
 
 void chip8_load(struct chip8 *chip8, const char *buf, size_t size)
@@ -55,12 +55,12 @@ static void chip8_exec_extended_eight(struct chip8 *chip8, unsigned short opcode
     chip8->registers.V[x] |= chip8->registers.V[y];
     break;
 
-  // 8xy2 - AND Vx, Vy. Set Vx = Vx AND Vy.
+  // 8xy2 - AND Vx, Vy. Performs a bitwise AND on Vx and Vy stores the result in Vx
   case 0x02:
     chip8->registers.V[x] &= chip8->registers.V[y];
     break;
 
-  // 8xy3 - XOR Vx, Vy. Set Vx = Vx XOR Vy.
+  // 8xy3 - XOR Vx, Vy. Performs a bitwise XOR on Vx and Vy stores the result in Vx
   case 0x03:
     chip8->registers.V[x] ^= chip8->registers.V[y];
     break;
@@ -182,7 +182,7 @@ static void chip8_exec_extended_F(struct chip8 *chip8, unsigned short opcode)
   // Fx55 - LD [I], Vx. Store registers V0 through Vx in memory starting at location I.
   case 0x55:
   {
-    for (int i = 0; i < x; i++)
+    for (int i = 0; i <= x; i++)
     {
       chip8_memory_set(&chip8->memory, chip8->registers.I + i, chip8->registers.V[i]);
     }
@@ -192,7 +192,7 @@ static void chip8_exec_extended_F(struct chip8 *chip8, unsigned short opcode)
   // Fx65 - LD Vx, [I]. Read registers V0 through Vx from memory starting at location I.
   case 0x65:
   {
-    for (int i = 0; i < x; i++)
+    for (int i = 0; i <= x; i++)
     {
       chip8->registers.V[i] = chip8_memory_get(&chip8->memory, chip8->registers.I + i);
     }
@@ -216,13 +216,13 @@ static void chip8_exec_extended(struct chip8 *chip8, unsigned short opcode)
     chip8->registers.PC = nnn;
     break;
 
-  // CALL addr
+  // CALL addr, 2nnn Call subroutine at location nnn
   case 0x2000:
     chip8_stack_push(chip8, chip8->registers.PC);
     chip8->registers.PC = nnn;
     break;
 
-  // SKIP EQUAL Vx, kk - 3xkk
+  // SE Vx, byte - 3xkk Skip next instruction if Vx=kk
   case 0x3000:
     if (chip8->registers.V[x] == kk)
     {
@@ -230,7 +230,7 @@ static void chip8_exec_extended(struct chip8 *chip8, unsigned short opcode)
     }
     break;
 
-  // SKIP NOT EQUAL Vx, kk - 4xkk
+    // SNE Vx, byte - 3xkk Skip next instruction if Vx!=kk
   case 0x4000:
     if (chip8->registers.V[x] != kk)
     {
@@ -238,7 +238,7 @@ static void chip8_exec_extended(struct chip8 *chip8, unsigned short opcode)
     }
     break;
 
-  // 5xy0 - SE Vx, Vy Skip next instruction if Vx = Vy.
+  // 5xy0 - SE, Vx, Vy, skip the next instruction if Vx = Vy
   case 0x5000:
     if (chip8->registers.V[x] == chip8->registers.V[y])
     {
@@ -246,12 +246,12 @@ static void chip8_exec_extended(struct chip8 *chip8, unsigned short opcode)
     }
     break;
 
-  // 6xkk - LD Vx, byte. Set Vx = kk.
+  // 6xkk - LD Vx, byte, Vx = kk
   case 0x6000:
     chip8->registers.V[x] = kk;
     break;
 
-  // 7xkk - ADD Vx, byte. Set Vx = Vx + kk.
+  // 7xkk - ADD Vx, byte. Set Vx = Vx + kk
   case 0x7000:
     chip8->registers.V[x] += kk;
     break;
@@ -261,45 +261,44 @@ static void chip8_exec_extended(struct chip8 *chip8, unsigned short opcode)
     chip8_exec_extended_eight(chip8, opcode);
     break;
 
-  // 9xy0 - SNE Vx, Vy Skip next instruction if Vx != Vy.
+  // 9xy0 - SNE Vx, Vy. Skip next instruction if Vx != Vy
   case 0x9000:
     if (chip8->registers.V[x] != chip8->registers.V[y])
     {
       chip8->registers.PC += 2;
     }
-    chip8_exec_extended_eight(chip8, opcode);
     break;
 
-  // Annn - LD I, addr. Set I = nnn.
+  // Annn - LD I, addr. Sets the I register to nnn
   case 0xA000:
     chip8->registers.I = nnn;
     break;
 
-  // Bnnn - JP V0, addr. Jump to location nnn + V0.
+  // bnnn - Jump to location nnn + V0
   case 0xB000:
     chip8->registers.PC = nnn + chip8->registers.V[0];
     break;
 
-  // Cxkk - RND Vx, byte. Set Vx = random byte AND kk.
+  // Cxkk - RND Vx, byte
   case 0xC000:
     srand(clock());
     chip8->registers.V[x] = (rand() % 255) & kk;
     break;
 
-  // Dxyn - DRW Vx, Vy, nibble. Display n-byte sprite starting at memory location I at (Vx, Vy), set VF = collision.
+  // Dxyn - DRW Vx, Vy, nibble. Draws sprite to the screen
   case 0xD000:
   {
     const char *sprite = (const char *)&chip8->memory.memory[chip8->registers.I];
     chip8->registers.V[0xf] = chip8_screen_draw_sprite(&chip8->screen, chip8->registers.V[x], chip8->registers.V[y], sprite, n);
-    break;
   }
+  break;
 
   // Keyboard operations
   case 0xE000:
   {
     switch (opcode & 0x00ff)
     {
-    // Ex9E - SKP Vx, Skip next instruction if key with the value of Vx is pressed.
+    // Ex9e - SKP Vx, Skip the next instruction if the key with the value of Vx is pressed
     case 0x9e:
       if (chip8_keyboard_is_down(&chip8->keyboard, chip8->registers.V[x]))
       {
@@ -317,7 +316,6 @@ static void chip8_exec_extended(struct chip8 *chip8, unsigned short opcode)
     break;
   }
 
-  // Delay timer
   case 0xF000:
     chip8_exec_extended_F(chip8, opcode);
     break;
@@ -328,12 +326,12 @@ void chip8_exec(struct chip8 *chip8, unsigned short opcode)
 {
   switch (opcode)
   {
-  // CLS
+  // CLS: Clear The Display
   case 0x00E0:
     chip8_screen_clear(&chip8->screen);
     break;
 
-  // RET
+  // Ret: Return from subroutine
   case 0x00EE:
     chip8->registers.PC = chip8_stack_pop(chip8);
     break;
